@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Notes DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>Student Notes DApp</h1>
+    <button id="connect">Connect to MetaMask</button>
+    <p>Message: <span id="message">Loading...</span></p>
+    <input type="text" id="newMessage" placeholder="Enter new message">
+    <button id="setMessage">Set Message</button>
+    <script>
+        const contractAddress = "0x05ad404F118dc63087f17b25Bb245D972B78Dc5f"; // Replace with your smart contract address from running truffle migrate --network development
+        // This contractABI can be found in blockchain/build/StudentNotes.json
+        const contractABI = [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "oldMessage",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "newMessage",
+          "type": "string"
+        }
+      ],
+      "name": "MessageUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "message",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "newMessage",
+          "type": "string"
+        }
+      ],
+      "name": "setMessage",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]; 
+
+        let web3, contract;
+
+        document.getElementById("connect").onclick = async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: "eth_requestAccounts" });
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+                alert("Connected to MetaMask!");
+                loadMessage();
+            } else {
+                alert("Please install MetaMask!");
+            }
+        };
+
+        async function loadMessage() {
+            const message = await contract.methods.message().call();
+            document.getElementById("message").innerText = message;
+        }
+
+        document.getElementById("setMessage").onclick = async () => {
+            const newMessage = document.getElementById("newMessage").value;
+            const accounts = await web3.eth.getAccounts();
+            await contract.methods.setMessage(newMessage).send({ from: accounts[0] });
+            loadMessage();
+        };
+    </script>
+</body>
+</html>
