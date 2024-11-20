@@ -3,23 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Notes DApp</title>
+    <title>Academic Resources DApp</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
 </head>
 <body>
-    <h1>Student Notes DApp</h1>
+    <h1>Academic Resources DApp</h1>
     <button id="connect">Connect to MetaMask</button>
-    <p>Message: <span id="message">Loading...</span></p>
-    <input type="text" id="newMessage" placeholder="Enter new message">
-    <button id="setMessage">Set Message</button>
+    <p id="status">Not connected</p>
+
+    <h2>Select a Module</h2>
+    <select id="moduleSelect">
+        <option value="CS4207">CS4207</option>
+        <option value="CS4125">CS4125</option>
+        <option value="CS4337">CS4337</option>
+        <option value="CS4287">CS4287</option>
+    </select>
+    
+    <h2>Add a Note</h2>
+    <input type="number" id="noteId" placeholder="Note ID (e.g., 1)">
+    <textarea id="noteContent" placeholder="Enter note content"></textarea>
+    <button id="addNote">Add Note</button>
+    <p id="addNoteStatus"></p>
+
+    <h2>View Notes</h2>
+    <input type="number" id="viewNoteId" placeholder="Note ID (e.g., 1)">
+    <button id="viewNotes">View Notes</button>
+    <div id="notesOutput"></div>
+
     <script>
-        const contractAddress = "0x05ad404F118dc63087f17b25Bb245D972B78Dc5f"; // Replace with your smart contract address from running truffle migrate --network development
-        // This contractABI can be found in blockchain/build/StudentNotes.json
+        const contractAddress = "0x89d29A8c023b305c590C6F94CF14F62CFE38F892"; // Replace with deployed address
         const contractABI = [
     {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "moduleId",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "noteId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "data",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isReview",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "submitter",
+          "type": "address"
+        }
+      ],
+      "name": "BlockAdded",
+      "type": "event"
     },
     {
       "anonymous": false,
@@ -27,22 +76,85 @@
         {
           "indexed": false,
           "internalType": "string",
-          "name": "oldMessage",
+          "name": "moduleId",
           "type": "string"
         },
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "noteId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
           "internalType": "string",
-          "name": "newMessage",
+          "name": "data",
           "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "submitter",
+          "type": "address"
         }
       ],
-      "name": "MessageUpdated",
+      "name": "NoteAdded",
       "type": "event"
     },
     {
-      "inputs": [],
-      "name": "message",
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "moduleNotes",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "data",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "submitter",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isReview",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "modules",
       "outputs": [
         {
           "internalType": "string",
@@ -58,17 +170,94 @@
       "inputs": [
         {
           "internalType": "string",
-          "name": "newMessage",
+          "name": "moduleId",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "noteId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "data",
           "type": "string"
         }
       ],
-      "name": "setMessage",
+      "name": "addNote",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "moduleId",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "noteId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "data",
+          "type": "string"
+        },
+        {
+          "internalType": "bool",
+          "name": "isReview",
+          "type": "bool"
+        }
+      ],
+      "name": "addBlock",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "moduleId",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "noteId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getNoteBlocks",
+      "outputs": [
+        {
+          "internalType": "string[]",
+          "name": "data",
+          "type": "string[]"
+        },
+        {
+          "internalType": "address[]",
+          "name": "submitters",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "timestamps",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bool[]",
+          "name": "isReviews",
+          "type": "bool[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "constant": true
     }
-  ]; 
-
+  ];
         let web3, contract;
 
         document.getElementById("connect").onclick = async () => {
@@ -76,23 +265,60 @@
                 web3 = new Web3(window.ethereum);
                 await window.ethereum.request({ method: "eth_requestAccounts" });
                 contract = new web3.eth.Contract(contractABI, contractAddress);
-                alert("Connected to MetaMask!");
-                loadMessage();
+                document.getElementById("status").innerText = "Connected to MetaMask!";
             } else {
                 alert("Please install MetaMask!");
             }
         };
 
-        async function loadMessage() {
-            const message = await contract.methods.message().call();
-            document.getElementById("message").innerText = message;
-        }
+        document.getElementById("addNote").onclick = async () => {
+            const moduleId = document.getElementById("moduleSelect").value;
+            const noteId = parseInt(document.getElementById("noteId").value);
+            const noteContent = document.getElementById("noteContent").value;
 
-        document.getElementById("setMessage").onclick = async () => {
-            const newMessage = document.getElementById("newMessage").value;
-            const accounts = await web3.eth.getAccounts();
-            await contract.methods.setMessage(newMessage).send({ from: accounts[0] });
-            loadMessage();
+            if (!noteId || !noteContent) {
+                alert("Fill in all fields!");
+                return;
+            }
+
+            try {
+                const accounts = await web3.eth.getAccounts();
+                await contract.methods.addNote(moduleId, noteId, noteContent).send({ from: accounts[0] });
+                document.getElementById("addNoteStatus").innerText = "Note added successfully!";
+            } catch (error) {
+                console.error("Error adding note:", error);
+                document.getElementById("addNoteStatus").innerText = "Error adding note.";
+            }
+        };
+
+        document.getElementById("viewNotes").onclick = async () => {
+            const moduleId = document.getElementById("moduleSelect").value;
+            const noteId = parseInt(document.getElementById("viewNoteId").value);
+
+            if (!noteId) {
+                alert("Fill in all fields!");
+                return;
+            }
+
+            try {
+                const result = await contract.methods.getNoteBlocks(moduleId, noteId).call();
+                const [data, submitters, timestamps, isReviews] = result;
+
+                const output = data.map((item, index) => `
+                    <p>
+                        <strong>Block ${index + 1}</strong><br>
+                        Data: ${item}<br>
+                        Submitter: ${submitters[index]}<br>
+                        Timestamp: ${new Date(timestamps[index] * 1000).toLocaleString()}<br>
+                        Is Review: ${isReviews[index] ? "Yes" : "No"}
+                    </p>
+                `).join("");
+
+                document.getElementById("notesOutput").innerHTML = output || "No blocks found.";
+            } catch (error) {
+                console.error("Error fetching blocks:", error);
+                document.getElementById("notesOutput").innerText = "Error fetching notes.";
+            }
         };
     </script>
 </body>

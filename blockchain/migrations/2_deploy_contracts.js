@@ -1,5 +1,5 @@
-const StudentNotes = artifacts.require("StudentNotes");
+const AcademicResources = artifacts.require("AcademicResources");
 
 module.exports = function (deployer) {
-    deployer.deploy(StudentNotes);
+    deployer.deploy(AcademicResources);
 };
