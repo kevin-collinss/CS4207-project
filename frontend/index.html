@@ -4,322 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academic Resources DApp</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
+    <script>
+        const apiBaseUrl = "http://localhost:5000/api";
+
+        async function addNote() {
+            const moduleId = document.getElementById("moduleId").value;
+            const noteId = document.getElementById("noteId").value;
+            const content = document.getElementById("noteContent").value;
+            const account = document.getElementById("account").value;
+
+            const response = await fetch(`${apiBaseUrl}/notes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ moduleId, noteId, content, account }),
+            });
+            const result = await response.json();
+            alert(result.success ? "Note added successfully!" : "Error adding note.");
+        }
+
+        async function addReview() {
+            const moduleId = document.getElementById("moduleId").value;
+            const noteId = document.getElementById("noteId").value;
+            const content = document.getElementById("reviewContent").value;
+            const account = document.getElementById("account").value;
+
+            const response = await fetch(`${apiBaseUrl}/reviews`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ moduleId, noteId, content, account }),
+            });
+            const result = await response.json();
+            alert(result.success ? "Review added successfully!" : "Error adding review.");
+        }
+
+        async function fetchNotes() {
+            const moduleId = document.getElementById("moduleId").value;
+            const noteId = document.getElementById("noteId").value;
+
+            const response = await fetch(`${apiBaseUrl}/notes?moduleId=${moduleId}&noteId=${noteId}`);
+            const result = await response.json();
+            if (result.success) {
+                const output = result.blocks.map((block, index) => `
+                    <p>
+                        <strong>Block ${index + 1}</strong><br>
+                        Content: ${block.content}<br>
+                        Submitter: ${block.submitter}<br>
+                        Timestamp: ${new Date(block.timestamp).toLocaleString()}<br>
+                        Is Review: ${block.isReview ? "Yes" : "No"}
+                    </p>
+                `).join("");
+                document.getElementById("output").innerHTML = output;
+            } else {
+                alert("Error fetching notes.");
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Academic Resources DApp</h1>
-    <button id="connect">Connect to MetaMask</button>
-    <p id="status">Not connected</p>
 
-    <h2>Select a Module</h2>
-    <select id="moduleSelect">
-        <option value="CS4207">CS4207</option>
-        <option value="CS4125">CS4125</option>
-        <option value="CS4337">CS4337</option>
-        <option value="CS4287">CS4287</option>
-    </select>
-    
-    <h2>Add a Note</h2>
-    <input type="number" id="noteId" placeholder="Note ID (e.g., 1)">
-    <textarea id="noteContent" placeholder="Enter note content"></textarea>
-    <button id="addNote">Add Note</button>
-    <p id="addNoteStatus"></p>
+    <label>Account Address:</label>
+    <input type="text" id="account" placeholder="Enter your Ethereum address"><br>
+
+    <h2>Add Note</h2>
+    <label>Module ID:</label>
+    <input type="text" id="moduleId" placeholder="CS4125"><br>
+    <label>Note ID:</label>
+    <input type="number" id="noteId" placeholder="1"><br>
+    <label>Note Content:</label>
+    <textarea id="noteContent"></textarea><br>
+    <button onclick="addNote()">Add Note</button>
+
+    <h2>Add Review</h2>
+    <label>Review Content:</label>
+    <textarea id="reviewContent"></textarea><br>
+    <button onclick="addReview()">Add Review</button>
 
     <h2>View Notes</h2>
-    <input type="number" id="viewNoteId" placeholder="Note ID (e.g., 1)">
-    <button id="viewNotes">View Notes</button>
-    <div id="notesOutput"></div>
-
-    <script>
-        const contractAddress = "0x89d29A8c023b305c590C6F94CF14F62CFE38F892"; // Replace with deployed address
-        const contractABI = [
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "moduleId",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "noteId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "data",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "isReview",
-          "type": "bool"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "submitter",
-          "type": "address"
-        }
-      ],
-      "name": "BlockAdded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "moduleId",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "noteId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "data",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "submitter",
-          "type": "address"
-        }
-      ],
-      "name": "NoteAdded",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "moduleNotes",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "data",
-          "type": "string"
-        },
-        {
-          "internalType": "address",
-          "name": "submitter",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "timestamp",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bool",
-          "name": "isReview",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function",
-      "constant": true
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "modules",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function",
-      "constant": true
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "moduleId",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "noteId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "data",
-          "type": "string"
-        }
-      ],
-      "name": "addNote",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "moduleId",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "noteId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "data",
-          "type": "string"
-        },
-        {
-          "internalType": "bool",
-          "name": "isReview",
-          "type": "bool"
-        }
-      ],
-      "name": "addBlock",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "moduleId",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "noteId",
-          "type": "uint256"
-        }
-      ],
-      "name": "getNoteBlocks",
-      "outputs": [
-        {
-          "internalType": "string[]",
-          "name": "data",
-          "type": "string[]"
-        },
-        {
-          "internalType": "address[]",
-          "name": "submitters",
-          "type": "address[]"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "timestamps",
-          "type": "uint256[]"
-        },
-        {
-          "internalType": "bool[]",
-          "name": "isReviews",
-          "type": "bool[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function",
-      "constant": true
-    }
-  ];
-        let web3, contract;
-
-        document.getElementById("connect").onclick = async () => {
-            if (window.ethereum) {
-                web3 = new Web3(window.ethereum);
-                await window.ethereum.request({ method: "eth_requestAccounts" });
-                contract = new web3.eth.Contract(contractABI, contractAddress);
-                document.getElementById("status").innerText = "Connected to MetaMask!";
-            } else {
-                alert("Please install MetaMask!");
-            }
-        };
-
-        document.getElementById("addNote").onclick = async () => {
-            const moduleId = document.getElementById("moduleSelect").value;
-            const noteId = parseInt(document.getElementById("noteId").value);
-            const noteContent = document.getElementById("noteContent").value;
-
-            if (!noteId || !noteContent) {
-                alert("Fill in all fields!");
-                return;
-            }
-
-            try {
-                const accounts = await web3.eth.getAccounts();
-                await contract.methods.addNote(moduleId, noteId, noteContent).send({ from: accounts[0] });
-                document.getElementById("addNoteStatus").innerText = "Note added successfully!";
-            } catch (error) {
-                console.error("Error adding note:", error);
-                document.getElementById("addNoteStatus").innerText = "Error adding note.";
-            }
-        };
-
-        document.getElementById("viewNotes").onclick = async () => {
-            const moduleId = document.getElementById("moduleSelect").value;
-            const noteId = parseInt(document.getElementById("viewNoteId").value);
-
-            if (!noteId) {
-                alert("Fill in all fields!");
-                return;
-            }
-
-            try {
-                const result = await contract.methods.getNoteBlocks(moduleId, noteId).call();
-                const [data, submitters, timestamps, isReviews] = result;
-
-                const output = data.map((item, index) => `
-                    <p>
-                        <strong>Block ${index + 1}</strong><br>
-                        Data: ${item}<br>
-                        Submitter: ${submitters[index]}<br>
-                        Timestamp: ${new Date(timestamps[index] * 1000).toLocaleString()}<br>
-                        Is Review: ${isReviews[index] ? "Yes" : "No"}
-                    </p>
-                `).join("");
-
-                document.getElementById("notesOutput").innerHTML = output || "No blocks found.";
-            } catch (error) {
-                console.error("Error fetching blocks:", error);
-                document.getElementById("notesOutput").innerText = "Error fetching notes.";
-            }
-        };
-    </script>
+    <button onclick="fetchNotes()">Fetch Notes</button>
+    <div id="output"></div>
 </body>
 </html>
