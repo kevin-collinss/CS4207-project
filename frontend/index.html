@@ -5,57 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academic Resources DApp</title>
     <script>
-        const apiBaseUrl = "http://localhost:5000/api";
+        const apiBaseUrl = "http://localhost:5000";
 
+        // Add a new note (first block in a note's blockchain)
         async function addNote() {
             const moduleId = document.getElementById("moduleId").value;
             const noteId = document.getElementById("noteId").value;
-            const content = document.getElementById("noteContent").value;
-            const account = document.getElementById("account").value;
+            const data = document.getElementById("noteContent").value;
+            const sender = document.getElementById("account").value;
 
-            const response = await fetch(`${apiBaseUrl}/notes`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ moduleId, noteId, content, account }),
-            });
-            const result = await response.json();
-            alert(result.success ? "Note added successfully!" : "Error adding note.");
+            if (!moduleId || !noteId || !data || !sender) {
+                alert("All fields are required!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/addNote`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ moduleId, noteId, data, sender }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message || "Note added successfully!");
+                } else {
+                    throw new Error(result.error || "Failed to add note.");
+                }
+            } catch (error) {
+                console.error("Error adding note:", error);
+                alert("Error adding note. Check console for details.");
+            }
         }
 
-        async function addReview() {
+        // Add a new block (review or note update)
+        async function addBlock() {
             const moduleId = document.getElementById("moduleId").value;
             const noteId = document.getElementById("noteId").value;
-            const content = document.getElementById("reviewContent").value;
-            const account = document.getElementById("account").value;
+            const data = document.getElementById("reviewContent").value;
+            const sender = document.getElementById("account").value;
+            const isReview = document.getElementById("isReview").checked;
 
-            const response = await fetch(`${apiBaseUrl}/reviews`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ moduleId, noteId, content, account }),
-            });
-            const result = await response.json();
-            alert(result.success ? "Review added successfully!" : "Error adding review.");
+            if (!moduleId || !noteId || !data || !sender) {
+                alert("All fields are required!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/addBlock`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ moduleId, noteId, data, sender, isReview }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message || "Block added successfully!");
+                } else {
+                    throw new Error(result.error || "Failed to add block.");
+                }
+            } catch (error) {
+                console.error("Error adding block:", error);
+                alert("Error adding block. Check console for details.");
+            }
         }
 
+        // Fetch all blocks for a specific note
         async function fetchNotes() {
             const moduleId = document.getElementById("moduleId").value;
             const noteId = document.getElementById("noteId").value;
 
-            const response = await fetch(`${apiBaseUrl}/notes?moduleId=${moduleId}&noteId=${noteId}`);
-            const result = await response.json();
-            if (result.success) {
-                const output = result.blocks.map((block, index) => `
-                    <p>
-                        <strong>Block ${index + 1}</strong><br>
-                        Content: ${block.content}<br>
-                        Submitter: ${block.submitter}<br>
-                        Timestamp: ${new Date(block.timestamp).toLocaleString()}<br>
-                        Is Review: ${block.isReview ? "Yes" : "No"}
-                    </p>
-                `).join("");
-                document.getElementById("output").innerHTML = output;
-            } else {
-                alert("Error fetching notes.");
+            if (!moduleId || !noteId) {
+                alert("Module ID and Note ID are required!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/getNoteBlocks?moduleId=${moduleId}&noteId=${noteId}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    const output = result.data.map((content, index) => `
+                        <div>
+                            <strong>Block ${index + 1}</strong><br>
+                            Content: ${content}<br>
+                            Submitter: ${result.submitters[index]}<br>
+                            Timestamp: ${new Date(result.timestamps[index] * 1000).toLocaleString()}<br>
+                            Is Review: ${result.isReviews[index] ? "Yes" : "No"}<br>
+                            <hr>
+                        </div>
+                    `).join("");
+                    document.getElementById("output").innerHTML = output;
+                } else {
+                    throw new Error(result.error || "Failed to fetch notes.");
+                }
+            } catch (error) {
+                console.error("Error fetching notes:", error);
+                alert("Error fetching notes. Check console for details.");
             }
         }
     </script>
@@ -63,23 +109,29 @@
 <body>
     <h1>Academic Resources DApp</h1>
 
-    <label>Account Address:</label>
+    <!-- Account Information -->
+    <label for="account">Account Address:</label>
     <input type="text" id="account" placeholder="Enter your Ethereum address"><br>
 
+    <!-- Add Note -->
     <h2>Add Note</h2>
-    <label>Module ID:</label>
-    <input type="text" id="moduleId" placeholder="CS4125"><br>
-    <label>Note ID:</label>
-    <input type="number" id="noteId" placeholder="1"><br>
-    <label>Note Content:</label>
-    <textarea id="noteContent"></textarea><br>
+    <label for="moduleId">Module ID:</label>
+    <input type="text" id="moduleId" placeholder="e.g., CS4125"><br>
+    <label for="noteId">Note ID:</label>
+    <input type="number" id="noteId" placeholder="e.g., 1"><br>
+    <label for="noteContent">Note Content:</label>
+    <textarea id="noteContent" placeholder="Enter note content here"></textarea><br>
     <button onclick="addNote()">Add Note</button>
 
-    <h2>Add Review</h2>
-    <label>Review Content:</label>
-    <textarea id="reviewContent"></textarea><br>
-    <button onclick="addReview()">Add Review</button>
+    <!-- Add Block -->
+    <h2>Add Review/Block</h2>
+    <label for="reviewContent">Block Content:</label>
+    <textarea id="reviewContent" placeholder="Enter review or new version"></textarea><br>
+    <label for="isReview">Is Review:</label>
+    <input type="checkbox" id="isReview"><br>
+    <button onclick="addBlock()">Add Block</button>
 
+    <!-- Fetch Notes -->
     <h2>View Notes</h2>
     <button onclick="fetchNotes()">Fetch Notes</button>
     <div id="output"></div>
