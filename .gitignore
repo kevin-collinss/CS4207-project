@@ -1,2 +1,3 @@
 blockchain/build/contracts
 backend/src/target
+backend/node_modules/
