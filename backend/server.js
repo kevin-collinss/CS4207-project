@@ -9,7 +9,6 @@ const port = 5000;
 // Middleware
 app.use(bodyParser.json());
 app.use(require("cors")());
-
 // Web3 Setup
 const web3 = new Web3("http://127.0.0.1:7545");
 const contractABI = [
@@ -238,7 +237,9 @@ const contractABI = [
     "constant": true
   }
 ];
-const contractAddress = "0xf23432bEf0b9b6e2B2E3F0119e56D94111627e54"; // Replace with deployed contract address
+const contractAddress = process.env.CONTRACT_ADDRESS; // Replace with deployed contract address
+const privateKey = process.env.PRIVATE_KEY;
+web3.eth.accounts.wallet.add(privateKey);
 
 // Initialize contract instance
 const academicResources = new web3.eth.Contract(contractABI, contractAddress);
@@ -316,22 +317,31 @@ app.post("/addBlock", async (req, res) => {
   }
 });
 
-// Get blocks for a specific note
 app.get("/getNoteBlocks", async (req, res) => {
   const { moduleId, noteId } = req.query;
 
   if (!moduleId || !noteId) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: moduleId, noteId." });
+    return res.status(400).json({ error: "Missing required fields: moduleId, noteId." });
   }
 
   try {
     // Call the smart contract to fetch blocks for the given note
-    const [data, submitters, timestamps, isReviews] =
-      await academicResources.methods
-        .getNoteBlocks(moduleId, parseInt(noteId))
-        .call();
+    const result = await academicResources.methods
+      .getNoteBlocks(moduleId, parseInt(noteId))
+      .call();
+
+    console.log("Raw result from smart contract:", result);
+
+    // Use the named keys to access the values
+    const data = result.data;
+    const submitters = result.submitters;
+    const timestamps = result.timestamps.map((timestamp) => Number(timestamp)); // Convert BigInt to Number if necessary
+    const isReviews = result.isReviews;
+
+    // Handle empty results
+    if (data.length === 0) {
+      return res.status(404).json({ message: "No blocks found for this note." });
+    }
 
     res.status(200).json({
       data,
@@ -341,14 +351,12 @@ app.get("/getNoteBlocks", async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching note blocks:", error);
-    res
-      .status(500)
-      .json({
-        error:
-          "Failed to fetch note blocks. Please check the contract or input data.",
-      });
+    res.status(500).json({
+      error: "Failed to fetch note blocks. Please check the contract or input data.",
+    });
   }
 });
+
 
 // Start the server
 app.listen(port, () => {
