@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academic Resources DApp</title>
+    <link rel="stylesheet" href="styles.css">
     <script>
         const apiBaseUrl = "http://localhost:5000";
 
@@ -22,8 +23,8 @@
             try {
                 const response = await fetch(`${apiBaseUrl}/addNote`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ moduleId, noteId, data, sender }),
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({moduleId, noteId, data, sender}),
                 });
 
                 const result = await response.json();
@@ -54,8 +55,8 @@
             try {
                 const response = await fetch(`${apiBaseUrl}/addBlock`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ moduleId, noteId, data, sender, isReview }),
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({moduleId, noteId, data, sender, isReview}),
                 });
 
                 const result = await response.json();
@@ -86,12 +87,26 @@
 
                 if (response.ok) {
                     const output = result.data.map((content, index) => `
-                        <div>
-                            <strong>Block ${index + 1}</strong><br>
-                            Content: ${content}<br>
-                            Submitter: ${result.submitters[index]}<br>
-                            Timestamp: ${new Date(result.timestamps[index] * 1000).toLocaleString()}<br>
-                            Is Review: ${result.isReviews[index] ? "Yes" : "No"}<br>
+                        <div class="note-block">
+                            <div class="note-header">
+                                <strong>Block ${index + 1}</strong>
+                            </div>
+
+                            <div class="note-content">
+                                <strong>Content:</strong><br> ${content}
+                             </div>
+
+                             <div class="note-detail">
+                                <strong>Submitter:</strong><br> ${result.submitters[index]}
+                             </div>
+
+                            <div class="note-detail">
+                                <strong>Timestamp:</strong><br> ${new Date(result.timestamps[index] * 1000).toLocaleString()}
+                            </div>
+
+                            <div class="note-detail">
+                                <strong>Is Review:</strong><br> ${result.isReviews[index] ? "Yes" : "No"}
+                            </div>
                             <hr>
                         </div>
                     `).join("");
@@ -107,33 +122,48 @@
     </script>
 </head>
 <body>
-    <h1>Academic Resources DApp</h1>
+<h1>
+    <img src="images/UlLogo.png" alt="Logo" class="logo">
+    Academic Resources DApp
+</h1>
+<div class="container">
 
     <!-- Account Information -->
-    <label for="account">Account Address:</label>
-    <input type="text" id="account" placeholder="Enter your Ethereum address"><br>
+    <div class="section">
+        <label for="account">Account Address:</label>
+        <input type="text" id="account" placeholder="Enter your Ethereum address"><br>
+    </div>
 
     <!-- Add Note -->
-    <h2>Add Note</h2>
-    <label for="moduleId">Module ID:</label>
-    <input type="text" id="moduleId" placeholder="e.g., CS4125"><br>
-    <label for="noteId">Note ID:</label>
-    <input type="number" id="noteId" placeholder="e.g., 1"><br>
-    <label for="noteContent">Note Content:</label>
-    <textarea id="noteContent" placeholder="Enter note content here"></textarea><br>
-    <button onclick="addNote()">Add Note</button>
+    <div class="section">
+        <h2>Add Note</h2>
+        <label for="moduleId">Module ID:</label>
+        <input type="text" id="moduleId" placeholder="e.g., CS4125"><br>
+        <label for="noteId">Note ID:</label>
+        <input type="number" id="noteId" placeholder="e.g., 1"><br>
+        <label for="noteContent">Note Content:</label>
+        <textarea id="noteContent" placeholder="Enter note content here"></textarea><br>
+        <button onclick="addNote()">Add Note</button>
+    </div>
 
     <!-- Add Block -->
-    <h2>Add Review/Block</h2>
-    <label for="reviewContent">Block Content:</label>
-    <textarea id="reviewContent" placeholder="Enter review or new version"></textarea><br>
-    <label for="isReview">Is Review:</label>
-    <input type="checkbox" id="isReview"><br>
-    <button onclick="addBlock()">Add Block</button>
+    <div class="section">
+        <h2>Add Review/Block</h2>
+        <label for="reviewContent">Block Content:</label>
+        <textarea id="reviewContent" placeholder="Enter review or new version"></textarea><br>
+        <div class="checkbox-container">
+            <label for="isReview">Is Review:</label>
+            <input type="checkbox" id="isReview">
+        </div><br>
+        <button onclick="addBlock()">Add Block</button>
+    </div>
 
     <!-- Fetch Notes -->
-    <h2>View Notes</h2>
-    <button onclick="fetchNotes()">Fetch Notes</button>
-    <div id="output"></div>
+    <div class="section">
+        <h2>View Notes</h2>
+        <button onclick="fetchNotes()">Fetch Notes</button>
+        <div id="output"></div>
+    </div>
+</div>
 </body>
 </html>
