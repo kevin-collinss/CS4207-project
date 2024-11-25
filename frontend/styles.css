@@ -29,6 +29,8 @@ h1 {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     overflow: hidden;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
 label {
@@ -119,6 +121,9 @@ hr {
     padding: 15px;
     background: #f9f9f9;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .note-header {
@@ -140,6 +145,9 @@ hr {
     margin: 5px 0;
     font-size: 14px;
     color: #666;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    line-height: 1.5;
 }
 
 .note-detail strong {
