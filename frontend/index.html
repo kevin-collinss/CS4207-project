@@ -43,7 +43,7 @@
         // Add a new block (review or note update)
         async function addBlock() {
             const moduleId = document.getElementById("moduleId").value;
-            const noteId = document.getElementById("noteId").value;
+            const noteId = document.getElementById("noteBlockId").value;
             const data = document.getElementById("reviewContent").value;
             const sender = document.getElementById("account").value;
             const isReview = document.getElementById("isReview").checked;
@@ -75,15 +75,15 @@
         // Fetch all blocks for a specific note
         async function fetchNotes() {
             const moduleId = document.getElementById("moduleId").value;
-            const noteId = document.getElementById("noteId").value;
+            const notesId = document.getElementById("notesId").value;
 
-            if (!moduleId || !noteId) {
+            if (!moduleId || !notesId) {
                 alert("Module ID and Note ID are required!");
                 return;
             }
 
             try {
-                const response = await fetch(`${apiBaseUrl}/getNoteBlocks?moduleId=${moduleId}&noteId=${noteId}`);
+                const response = await fetch(`${apiBaseUrl}/getNoteBlocks?moduleId=${moduleId}&noteId=${notesId}`);
                 const result = await response.json();
 
                 if (response.ok) {
@@ -133,13 +133,15 @@
     <div class="section">
         <label for="account">Account Address:</label>
         <input type="text" id="account" placeholder="Enter your Ethereum address"><br>
+        <label for="moduleId">Module ID:</label>
+        <input type="text" id="moduleId" placeholder="e.g., CS4125"><br>
     </div>
+
+    <hr>
 
     <!-- Add Note -->
     <div class="section">
         <h2>Add Note</h2>
-        <label for="moduleId">Module ID:</label>
-        <input type="text" id="moduleId" placeholder="e.g., CS4125"><br>
         <label for="noteId">Note ID:</label>
         <input type="number" id="noteId" placeholder="e.g., 1"><br>
         <label for="noteContent">Note Content:</label>
@@ -147,9 +149,13 @@
         <button onclick="addNote()">Add Note</button>
     </div>
 
+    <hr>
+
     <!-- Add Block -->
     <div class="section">
         <h2>Add Review/Block</h2>
+        <label for="noteBlockId">Note ID:</label>
+        <input type="number" id="noteBlockId" placeholder="e.g., 1"><br>
         <label for="reviewContent">Block Content:</label>
         <textarea id="reviewContent" placeholder="Enter review or new version"></textarea><br>
         <div class="checkbox-container">
@@ -159,9 +165,13 @@
         <button onclick="addBlock()">Add Block</button>
     </div>
 
+    <hr>
+
     <!-- Fetch Notes -->
     <div class="section">
         <h2>View Notes</h2>
+        <label for="notesId">Note ID:</label>
+        <input type="number" id="notesId" placeholder="e.g., 1"><br>
         <button onclick="fetchNotes()">Fetch Notes</button>
         <div id="output"></div>
     </div>
