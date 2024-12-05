@@ -1,0 +1,120 @@
+[
+    {
+        "moduleID": "CS4337",
+        "noteID": 61,
+        "blocks": [
+            {
+                "data": "Introduction to Kafka.",
+                "isReview": false
+            },
+            {
+                "data": "Review: Add more examples on how micro-services communicate.",
+                "isReview": true
+            },
+            {
+                "data": "Review: The notes lack clarity in some areas.",
+                "isReview": true
+            }
+        ]
+    },
+    {
+        "moduleID": "CS4337",
+        "noteID": 62,
+        "blocks": [
+            {
+                "data": "Consensus / Leader Election.",
+                "isReview": false
+            },
+            {
+                "data": "Review: Needs more detail on RAFT.",
+                "isReview": true
+            },
+            {
+                "data": "Review: Please explain the candidate time out in a clearer manner.",
+                "isReview": true
+            }
+        ]
+    },
+
+        {
+        "moduleID": "CS4207",
+        "noteID": 63,
+        "blocks": [
+            {
+                "data": "Introduction to Blockchain.",
+                "isReview": false
+            },
+            {
+                "data": "Review: Add more examples on consensus algorithms.",
+                "isReview": true
+            },
+            {
+                "data": "Dining Philosophers Problem.",
+                "isReview": false
+            }
+        ]
+    },
+    {
+        "moduleID": "CS4207",
+        "noteID": 64,
+        "blocks": [
+            {
+                "data": "Race Conditions",
+                "isReview": false
+            },
+            {
+                "data": "Review: Needs more real world examples.",
+                "isReview": true
+            }
+        ]
+    },
+
+    {
+        "moduleID": "CS4287",
+        "noteID": 65,
+        "blocks": [
+            {
+                "data": "Neural Computing",
+                "isReview": false
+            },
+            {
+                "data": "Reinforcement Learning",
+                "isReview": false
+            }
+        ]
+    },
+
+        {
+        "moduleID": "CS4125",
+        "noteID": 66,
+        "blocks": [
+            {
+                "data": "Polymorphism",
+                "isReview": false
+            },
+            {
+                "data": "Review: Stop interchanging languages between java and python.",
+                "isReview": true
+            },
+            {
+                "data": "The commander is commanding.",
+                "isReview": false
+            }
+        ]
+    },
+
+    {
+        "moduleID": "CS4125",
+        "noteID": 66,
+        "blocks": [
+            {
+                "data": "Abstraction",
+                "isReview": false
+            },
+            {
+                "data": "Inheritance",
+                "isReview": false
+            }
+        ]
+    }
+]
