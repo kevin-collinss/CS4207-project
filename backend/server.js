@@ -54,6 +54,25 @@ const contractABI = [
     "inputs": [
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "miner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "nonce",
+        "type": "uint32"
+      }
+    ],
+    "name": "BlockMined",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "string",
         "name": "moduleId",
         "type": "string"
@@ -79,6 +98,20 @@ const contractABI = [
     ],
     "name": "NoteAdded",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "miningDifficulty",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -146,6 +179,20 @@ const contractABI = [
     "constant": true
   },
   {
+    "inputs": [],
+    "name": "getMiningDifficulty",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
@@ -161,6 +208,11 @@ const contractABI = [
         "internalType": "string",
         "name": "data",
         "type": "string"
+      },
+      {
+        "internalType": "uint32",
+        "name": "nonce",
+        "type": "uint32"
       }
     ],
     "name": "addNote",
@@ -189,9 +241,52 @@ const contractABI = [
         "internalType": "bool",
         "name": "isReview",
         "type": "bool"
+      },
+      {
+        "internalType": "uint32",
+        "name": "nonce",
+        "type": "uint32"
       }
     ],
     "name": "addBlock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "header",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint32",
+        "name": "nonce",
+        "type": "uint32"
+      }
+    ],
+    "name": "validateProofOfWork",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "newDifficulty",
+        "type": "uint32"
+      }
+    ],
+    "name": "setMiningDifficulty",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -235,6 +330,29 @@ const contractABI = [
     "stateMutability": "view",
     "type": "function",
     "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "moduleId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "noteId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "blockIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "revertToBlock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ];
 const contractAddress = process.env.CONTRACT_ADDRESS; // Replace with deployed contract address
@@ -265,9 +383,21 @@ app.post("/addNote", async (req, res) => {
   }
 
   try {
+
+    // Fetch the current mining difficulty from the contract
+    const difficulty = await academicResources.methods.miningDifficulty().call();
+
+    // Prepare the header for mining
+    const header = moduleId + noteId + data;
+
+    // Mine the nonce
+    const nonce = await mineNonce(header, difficulty);
+
+    console.log(`Nonce mined: ${nonce}`);
+
     // Send the transaction to the contract to add a new note
     const tx = await academicResources.methods
-      .addNote(moduleId, parseInt(noteId), data)
+      .addNote(moduleId, parseInt(noteId), data, nonce)
       .send({ from: sender });
 
     res.status(200).json({
@@ -362,3 +492,117 @@ app.get("/getNoteBlocks", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+
+function mineNonce(header, difficulty) {
+  let nonce = 0n; 
+
+  // const target = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff') / BigInt(difficulty);
+  // (0xffff *208)
+  const target = (BigInt(0xffff) * (BigInt(2) ** BigInt(208))) / BigInt(difficulty);
+  console.log("Target:", target.toString());
+  // const target = (BigInt(0xf) * (BigInt(2) ** BigInt(208))) / BigInt(difficulty);
+
+  while (true) {
+    const hash = web3.utils.soliditySha3(header + nonce.toString());
+    const hashAsBigInt = BigInt(`0x${hash.slice(2)}`);
+    console.log("Nonce:", nonce, "Hash:", hashAsBigInt.toString());
+    console.log("Target:", target.toString());
+    console.log("Hash  :", hashAsBigInt.toString());
+
+    if (hashAsBigInt < target) {
+      console.log(`Valid nonce found: ${nonce}`);
+      return nonce.toString(); 
+    }
+
+    nonce += 1n; 
+  }
+}
+
+
+async function testValidateProofOfWork() {
+  const moduleId = "CS4215";
+  const noteId = 12345;
+  const data = "This is a test note";
+  const header = moduleId + noteId + data;  
+
+  const difficulty = await academicResources.methods.miningDifficulty().call();
+
+  const nonce = await mineNonce(header, difficulty);
+  console.log(`Nonce mined: ${nonce}`);
+
+  const isValid = await academicResources.methods.validateProofOfWork(header, nonce).call();
+  console.log("Is the mined nonce valid? ", isValid);
+
+  if (isValid) {
+    console.log("Proof of work is valid.");
+  } else {
+    console.log("Proof of work is invalid.");
+  }
+}
+
+testValidateProofOfWork().catch(console.error);
+
+
+// function mineNonce(header) {
+//   console.log("Header:", header.toString()); 
+
+//   let nonce = 0n; 
+
+//   const target = BigInt('0x' + 'fff'.repeat(64)); 
+//   while (true) {
+//     const hash = web3.utils.soliditySha3(header.toString() + nonce.toString());
+//     const hashAsBigInt = BigInt(`0x${hash.slice(2)}`);
+
+//     console.log("Nonce:", nonce.toString());
+//     console.log("Hash: ", hashAsBigInt.toString());
+    
+//     if (hashAsBigInt < target) {
+//       console.log("Found valid nonce:", nonce); 
+//       return nonce;
+//     }
+
+//     nonce += BigInt(1); // Increment nonce
+//   }
+// }
+
+
+// function mineNonce(header, difficulty) {
+//   console.log("head:", header.toString()); 
+//   difficulty = BigInt(difficulty);
+//   let nonce = 0n; // Start with nonce as a BigInt
+
+//   const target = BigInt((BigInt(0xffff) * (BigInt(2) ** BigInt(208))) / difficulty);
+//   console.log("Target:", target.toString()); 
+
+//   while (true) {
+//     const hash = web3.utils.soliditySha3(header.toString() + nonce.toString());
+
+//     // const hashAsBigInt = BigInt(hash); 
+
+//     const hashAsBigInt = BigInt(`0x${hash.slice(2)}`);
+
+
+//     // console.log("head:", header.toString()); 
+//     console.log("nonce:", nonce.toString());
+//     // console.log("Hash:", hash);
+//     console.log("Hash  : ", hashAsBigInt.toString());
+//     console.log("Target: ", target.toString() + "\n"); 
+    
+//     // let a = 26959535291011309493156476344723991336010898738574164086137773096950n;
+//     // let b = 26959535291011309493156476344723991336010898738574164086137773096960n
+
+//     // if(a < target){
+//     //   console.log("nonce : " + nonce);
+//     // }
+
+
+
+//     if (hashAsBigInt < target) {
+//       // console.log("Found valid nonce:", nonce); // Log the valid nonce
+//       return nonce; // Return the BigInt nonce
+      
+//     }
+//     nonce += BigInt(1); 
+//   }
+// }
