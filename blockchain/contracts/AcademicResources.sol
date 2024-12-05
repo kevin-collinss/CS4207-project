@@ -15,6 +15,12 @@ contract AcademicResources {
     // Predefined module IDs
     string[] public modules = ["CS4207", "CS4125", "CS4337", "CS4287"];
 
+    // Proof of Work difficulty
+    uint256 public miningDifficulty = 1000;
+    function getMiningDifficulty() public view returns (uint256) {
+        return miningDifficulty;
+    }
+
     // Events for logging actions
     event NoteAdded(string moduleId, uint256 noteId, string data, address submitter);
     event BlockAdded(string moduleId, uint256 noteId, string data, bool isReview, address submitter);
@@ -32,9 +38,18 @@ contract AcademicResources {
         _;
     }
 
+    // Proof of Work validation
+    function validateProofOfWork(string memory data, uint256 nonce) public view returns (bool) {
+        // Data & nonce hashed
+        bytes32 hash = keccak256(abi.encodePacked(data, nonce));
+        // Check against difficulty
+        return uint256(hash) < miningDifficulty;
+    }
+
     // Add a new note (first block in a note's blockchain)
-    function addNote(string memory moduleId, uint256 noteId, string memory data) public validModule(moduleId) {
+    function addNote(string memory moduleId, uint256 noteId, string memory data, uint256 nonce) public validModule(moduleId) {
         require(moduleNotes[moduleId][noteId].length == 0, "Note already exists");
+        require(validateProofOfWork(data, nonce), "Invalid proof of work");
         Block memory newBlock = Block({
             data: data,
             submitter: msg.sender,
@@ -46,8 +61,9 @@ contract AcademicResources {
     }
 
     // Add a new version or review to an existing note
-    function addBlock(string memory moduleId, uint256 noteId, string memory data, bool isReview) public validModule(moduleId) {
+    function addBlock(string memory moduleId, uint256 noteId, string memory data, bool isReview, uint256 nonce) public validModule(moduleId) {
         require(moduleNotes[moduleId][noteId].length > 0, "Note does not exist");
+        require(validateProofOfWork(data, nonce), "Invalid proof of work");
         Block memory newBlock = Block({
             data: data,
             submitter: msg.sender,
