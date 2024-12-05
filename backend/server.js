@@ -40,9 +40,17 @@ app.post("/addNote", async (req, res) => {
   }
 
   try {
+
+    const difficulty = 1000;
+
+    const header = moduleId + noteId + data;
+
+    const nonce = await mineNonce(header, difficulty);
+
+    console.log(`Nonce mined: ${nonce}`);
+
     // Send the transaction to the contract to add a new note
-    const tx = await academicResources.methods
-      .addNote(moduleId, parseInt(noteId), data)
+    const tx = await academicResources.methods.addNote(moduleId, parseInt(noteId), data, parseInt(nonce))
       .send({ from: sender });
 
     res.status(200).json({
@@ -51,11 +59,9 @@ app.post("/addNote", async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding note:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to add note. Please check the contract or input data.",
-      });
+    res.status(500).json({
+      error: "Failed to add note. Please check the contract or input data.",
+    });
   }
 });
 
@@ -73,9 +79,18 @@ app.post("/addBlock", async (req, res) => {
   }
 
   try {
+
+    const difficulty = 1000;
+
+    const header = moduleId + noteId + data;
+
+    const nonce = await mineNonce(header, difficulty);
+
+    console.log(`Nonce mined: ${nonce}`);
+
     // Send the transaction to the contract to add a block (note version or review)
     const tx = await academicResources.methods
-      .addBlock(moduleId, parseInt(noteId), data, isReview)
+      .addBlock(moduleId, parseInt(noteId), data, isReview, parseInt(nonce))
       .send({ from: sender });
 
     res.status(200).json({
@@ -131,6 +146,36 @@ app.get("/getNoteBlocks", async (req, res) => {
     });
   }
 });
+
+// Function to mine the nonce
+function mineNonce(header, difficulty) {
+  let nonce = 0n; 
+
+
+  const baseTarget = BigInt('0x' + 'f'.repeat(64)); 
+  const target = baseTarget / BigInt(difficulty);  // Adjust target based on difficulty
+
+  console.log("Base target:", baseTarget.toString());
+  console.log("Target:", target.toString());
+
+  while (true) {
+    
+    const hash = web3.utils.soliditySha3(header + nonce.toString());
+    const hashAsBigInt = BigInt(`0x${hash.slice(2)}`); 
+
+    // console.log("Nonce:", nonce, "Hash:", hashAsBigInt.toString());
+    if (hashAsBigInt < target) {
+      console.log(`Valid nonce found: ${nonce}`);
+      return nonce.toString(); 
+    }
+
+    nonce += 1n;
+    if (nonce > 100000n) {  
+      console.log("Nonce generation failed after 100000 attempts.");
+      return null;  
+    }
+  }
+}
 
 
 // Start the server
