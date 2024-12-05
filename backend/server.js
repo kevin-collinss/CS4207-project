@@ -41,6 +41,8 @@ app.post("/addNote", async (req, res) => {
 
   try {
 
+    //get difficulty from the contract
+    // const difficulty = await academicResources.methods.getMiningDifficulty().call();
     const difficulty = 1000;
 
     const header = moduleId + noteId + data;
@@ -80,6 +82,8 @@ app.post("/addBlock", async (req, res) => {
 
   try {
 
+    //get difficulty from the contract
+    // const difficulty = await academicResources.methods.getMiningDifficulty().call();
     const difficulty = 1000;
 
     const header = moduleId + noteId + data;

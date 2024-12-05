@@ -17,6 +17,9 @@ contract AcademicResources {
 
     // Proof of Work difficulty
     uint256 public miningDifficulty = 1000;
+    function getMiningDifficulty() public view returns (uint256) {
+        return miningDifficulty;
+    }
 
     // Events for logging actions
     event NoteAdded(string moduleId, uint256 noteId, string data, address submitter);
