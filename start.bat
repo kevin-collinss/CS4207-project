@@ -1,6 +1,6 @@
-@echo on
+@echo off
 :: Navigate to your project directory
-cd /d "C:\Users\tadhg\Desktop\Codes\Gauri\CS4207-project\"
+cd /d %~dp0
 
 :: Start Ganache in a new terminal
 start cmd /k "ganache --server.port 7545 --account='0xbe7d028aeb35c441f84d829387cad6328754dd91e4848236efe62404d9550c7c,1000000000000000000000'"

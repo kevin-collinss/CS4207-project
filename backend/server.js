@@ -22,9 +22,84 @@ const academicResources = new web3.eth.Contract(contractABI, contractAddress);
 // Use body parser middleware to parse JSON request bodies
 app.use(bodyParser.json());
 
+
+async function checkBalance(accountAddress) {
+  try {
+      // Fetch balance in Wei
+      const balanceWei = await web3.eth.getBalance(accountAddress);
+
+      // Convert Wei to Ether
+      const balanceEther = web3.utils.fromWei(balanceWei, 'ether');
+
+      console.log(`Balance of ${accountAddress}: ${balanceEther} Ether`);
+
+      return balanceEther;
+  } catch (error) {
+      console.error("Error fetching balance:", error);
+  }
+}
+
+app.post('/checkBalance', async (req, res) => {
+  const { accountAddress } = req.body;
+
+  if (!accountAddress) {
+    return res
+      .status(400)
+      .json({
+        error: "Missing required fields: accountAddress.",
+      });
+  }
+
+  try {
+    const balance = await checkBalance(accountAddress)
+
+    res.status(200).json({
+      message: "Balance successfully recieved!",
+      balance: balance,
+    });
+
+  } catch (error) {
+    console.error("Error adding note:", error);
+    res.status(500).json({
+      error: "Failed to add note. Please check the contract or input data.",
+    });
+  }
+});
+
 // Default route
 app.get("/", (req, res) => {
   res.send("Welcome to the Blockchain Resource Sharing API");
+});
+
+app.post('/createAccount', async (req, res) => {
+  try {
+    // Generate a new account
+    const account = web3.eth.accounts.create();
+
+    const gasPrice = await web3.eth.getGasPrice();
+    const tx = {
+      from: new Web3().eth.accounts.privateKeyToAccount(privateKey).address,
+      to: account.address,
+      value: web3.utils.toWei('2', 'ether'),
+      gas: 21000,
+      gasPrice
+    };
+
+    const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+      // Send back the account address and private key
+      res.status(200).json({
+          address: account.address,
+          privateKey: account.privateKey,
+          balance: checkBalance(account.address)
+      });
+  } catch (error) {
+      console.error("Error creating account:", error);
+      res.status(500).json({
+          error: "Failed to create account. Please try again later."
+      });
+  }
 });
 
 // Add a new note (first block in a note's blockchain)
