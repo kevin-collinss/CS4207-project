@@ -22,9 +22,85 @@ const academicResources = new web3.eth.Contract(contractABI, contractAddress);
 // Use body parser middleware to parse JSON request bodies
 app.use(bodyParser.json());
 
+
+async function checkBalance(accountAddress) {
+  try {
+      // Fetch balance in Wei
+      const balanceWei = await web3.eth.getBalance(accountAddress);
+
+      // Convert Wei to Ether
+      const balanceEther = web3.utils.fromWei(balanceWei, 'ether');
+
+      console.log(`Balance of ${accountAddress}: ${balanceEther} Ether`);
+
+      return balanceEther;
+  } catch (error) {
+      console.error("Error fetching balance:", error);
+  }
+}
+
 // Default route
 app.get("/", (req, res) => {
   res.send("Welcome to the Blockchain Resource Sharing API");
+});
+
+app.post('/checkBalance', async (req, res) => {
+  const { accountAddress } = req.body;
+
+  if (!accountAddress) {
+    return res
+      .status(400)
+      .json({
+        error: "Missing required fields: accountAddress.",
+      });
+  }
+
+  try {
+    const balance = await checkBalance(accountAddress)
+
+    res.status(200).json({
+      message: "Balance successfully recieved!",
+      balance: balance,
+    });
+
+  } catch (error) {
+    console.error("Error adding note:", error);
+    res.status(500).json({
+      error: "Failed to add note. Please check the contract or input data.",
+    });
+  }
+});
+
+app.post('/createAccount', async (req, res) => {
+  try {
+    // Generate a new account
+    const account = web3.eth.accounts.create();
+    web3.eth.accounts.wallet.add(account.privateKey);
+
+    const gasPrice = await web3.eth.getGasPrice();
+    const tx = {
+      from: web3.eth.accounts.privateKeyToAccount(privateKey).address,
+      to: account.address,
+      value: web3.utils.toWei('2', 'ether'),
+      gas: 21000,
+      gasPrice
+    };
+
+    const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
+    await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+      // Send back the account address and private key
+      res.status(200).json({
+          address: account.address,
+          privateKey: account.privateKey,
+          balance: checkBalance(account.address)
+      });
+  } catch (error) {
+      console.error("Error creating account:", error);
+      res.status(500).json({
+          error: "Failed to create account. Please try again later."
+      });
+  }
 });
 
 // Add a new note (first block in a note's blockchain)
@@ -44,9 +120,8 @@ app.post("/addNote", async (req, res) => {
     //get difficulty from the contract
     const difficulty = await academicResources.methods.getMiningDifficulty().call();
 
-    const header = moduleId + noteId + data;
-
-    const nonce = await mineNonce(header, difficulty);
+    const nonce = await mineNonce(moduleId, noteId, data, difficulty);
+    if (!nonce) throw new Error("Failed to mine a valid nonce!");
 
     console.log(`Nonce mined: ${nonce}`);
 
@@ -82,12 +157,10 @@ app.post("/addBlock", async (req, res) => {
   try {
 
     //get difficulty from the contract
-    // const difficulty = await academicResources.methods.getMiningDifficulty().call();
-    const difficulty = 1000;
+    const difficulty = await academicResources.methods.getMiningDifficulty().call();
 
-    const header = moduleId + noteId + data;
-
-    const nonce = await mineNonce(header, difficulty);
+    const nonce = await mineNonce(moduleId, noteId, data, difficulty);
+    if (!nonce) throw new Error("Failed to mine a valid nonce!");
 
     console.log(`Nonce mined: ${nonce}`);
 
@@ -151,15 +224,14 @@ app.get("/getNoteBlocks", async (req, res) => {
 });
 
 // Function to mine the nonce
-function mineNonce(header, difficulty) {
+function mineNonce(moduleId, noteId, data, difficulty) {
   let nonce = 0n; 
-
 
   const baseTarget = BigInt('0x' + 'f'.repeat(64)); 
   const target = baseTarget / BigInt(difficulty);
 
   console.log("Base target:", baseTarget.toString());
-  console.log("Target:", target.toString());
+  console.log("Target:     ", target.toString());
 
   while (true) {
     
@@ -185,7 +257,6 @@ function mineNonce(header, difficulty) {
     }
   }
 }
-
 
 // Start the server
 app.listen(port, () => {
