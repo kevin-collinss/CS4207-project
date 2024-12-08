@@ -47,6 +47,7 @@ contract AcademicResources {
         uint256 baseTarget = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
         uint256 target = baseTarget / miningDifficulty;
         return uint256(hash) < target;
+        // return true;
     }
 
     // Add a new note (first block in a note's blockchain)

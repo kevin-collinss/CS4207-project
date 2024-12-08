@@ -118,12 +118,11 @@ app.post("/addNote", async (req, res) => {
   try {
 
     //get difficulty from the contract
-    // const difficulty = await academicResources.methods.getMiningDifficulty().call();
-    const difficulty = 1000;
+    const difficulty = await academicResources.methods.getMiningDifficulty().call();
+    // const difficulty = 1000;
 
-    const header = moduleId + noteId + data;
-
-    const nonce = await mineNonce(header, difficulty);
+    const nonce = await mineNonce(moduleId, noteId, data, difficulty);
+    if (!nonce) throw new Error("Failed to mine a valid nonce!");
 
     console.log(`Nonce mined: ${nonce}`);
 
@@ -159,12 +158,10 @@ app.post("/addBlock", async (req, res) => {
   try {
 
     //get difficulty from the contract
-    // const difficulty = await academicResources.methods.getMiningDifficulty().call();
-    const difficulty = 1000;
+    const difficulty = await academicResources.methods.getMiningDifficulty().call();
 
-    const header = moduleId + noteId + data;
-
-    const nonce = await mineNonce(header, difficulty);
+    const nonce = await mineNonce(moduleId, noteId, data, difficulty);
+    if (!nonce) throw new Error("Failed to mine a valid nonce!");
 
     console.log(`Nonce mined: ${nonce}`);
 
@@ -228,7 +225,7 @@ app.get("/getNoteBlocks", async (req, res) => {
 });
 
 // Function to mine the nonce
-function mineNonce(header, difficulty) {
+function mineNonce(moduleId, noteId, data, difficulty) {
   let nonce = 0n; 
 
   const baseTarget = BigInt('0x' + 'f'.repeat(64)); 
@@ -239,7 +236,14 @@ function mineNonce(header, difficulty) {
 
   while (true) {
     
-    const hash = web3.utils.soliditySha3(header + nonce.toString());
+    const hash = web3.utils.soliditySha3(
+      {type: "string", value: moduleId},
+      {type: "uint256", value: noteId},
+      {type: "string", value: data},
+      {type: "uint256", value: nonce},
+    );
+    if (!hash) throw new Error("Failed to generate hash.");
+    
     const hashAsBigInt = BigInt(`0x${hash.slice(2)}`); 
 
     // console.log("Nonce:", nonce, "Hash:", hashAsBigInt.toString());
