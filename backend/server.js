@@ -75,6 +75,7 @@ app.post('/createAccount', async (req, res) => {
   try {
     // Generate a new account
     const account = web3.eth.accounts.create();
+    web3.eth.accounts.wallet.add(account.privateKey);
 
     const gasPrice = await web3.eth.getGasPrice();
     const tx = {
@@ -86,7 +87,7 @@ app.post('/createAccount', async (req, res) => {
     };
 
     const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
 
       // Send back the account address and private key
       res.status(200).json({
@@ -234,7 +235,7 @@ function mineNonce(header, difficulty) {
   const target = baseTarget / BigInt(difficulty);  // Adjust target based on difficulty
 
   console.log("Base target:", baseTarget.toString());
-  console.log("Target:", target.toString());
+  console.log("Target:     ", target.toString());
 
   while (true) {
     
