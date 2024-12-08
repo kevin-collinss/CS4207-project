@@ -39,6 +39,11 @@ async function checkBalance(accountAddress) {
   }
 }
 
+// Default route
+app.get("/", (req, res) => {
+  res.send("Welcome to the Blockchain Resource Sharing API");
+});
+
 app.post('/checkBalance', async (req, res) => {
   const { accountAddress } = req.body;
 
@@ -66,11 +71,6 @@ app.post('/checkBalance', async (req, res) => {
   }
 });
 
-// Default route
-app.get("/", (req, res) => {
-  res.send("Welcome to the Blockchain Resource Sharing API");
-});
-
 app.post('/createAccount', async (req, res) => {
   try {
     // Generate a new account
@@ -78,7 +78,7 @@ app.post('/createAccount', async (req, res) => {
 
     const gasPrice = await web3.eth.getGasPrice();
     const tx = {
-      from: new Web3().eth.accounts.privateKeyToAccount(privateKey).address,
+      from: web3.eth.accounts.privateKeyToAccount(privateKey).address,
       to: account.address,
       value: web3.utils.toWei('2', 'ether'),
       gas: 21000,
@@ -230,7 +230,6 @@ app.get("/getNoteBlocks", async (req, res) => {
 function mineNonce(header, difficulty) {
   let nonce = 0n; 
 
-
   const baseTarget = BigInt('0x' + 'f'.repeat(64)); 
   const target = baseTarget / BigInt(difficulty);  // Adjust target based on difficulty
 
@@ -255,7 +254,6 @@ function mineNonce(header, difficulty) {
     }
   }
 }
-
 
 // Start the server
 app.listen(port, () => {
