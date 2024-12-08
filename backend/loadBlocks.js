@@ -1,68 +1,61 @@
-// Script used to run blockchain_test_dataset.json to generate test data.
-
-const { Web3 } = require("web3");
+const axios = require("axios");
 const fs = require("fs");
-require("dotenv").config();
 
-// Loading the JSON dataset.
+// Loading the JSON dataset
 const dataset = JSON.parse(fs.readFileSync("blockchain_test_dataset.json", "utf8"));
 
-// Setting up web3 connection.
-const web3 = new Web3("http://127.0.0.1:7545");
-const contractAddress = process.env.CONTRACT_ADDRESS;
-const contractABI = JSON.parse(process.env.ABI);
-
-// Connecting to the contract.
-const contract = new web3.eth.Contract(contractABI, contractAddress);
+// Defining the backend URL
+const BACKEND_URL = "http://localhost:5000";
 
 async function loadBlocks() {
-    const accounts = await web3.eth.getAccounts(); // Get your wallet addresses
-    console.log("Sender Address:", accounts[0]);
+    console.log("Starting to load blocks...");
 
-    // Processing the Requests.
     for (const note of dataset) {
         const { moduleID, noteID, blocks } = note;
-        console.log("Processing:", moduleID, noteID);
-
-        // Validating the moduleID.
-        const validModules = ["CS4207", "CS4125", "CS4337", "CS4287"];
-        if (!validModules.includes(moduleID)) {
-            console.error(`Invalid moduleID: ${moduleID}`);
-            continue;
-        }
+        console.log(`Processing noteID: ${noteID}, moduleID: ${moduleID}`);
 
         try {
-            // Checking if the note already exists.
-            const existingBlocks = await contract.methods
-                .getNoteBlocks(moduleID, parseInt(noteID))
-                .call();
-
-            if (existingBlocks.data.length === 0) {
-                // Adding the first block as a new note.
-                const firstBlock = blocks[0];
-                if (!firstBlock || firstBlock.isReview) {
-                    console.error(`No valid initial block found for note ${noteID} in module ${moduleID}`);
-                    continue;
-                }
-
-                await contract.methods
-                    .addNote(moduleID, parseInt(noteID), firstBlock.data)
-                    .send({ from: accounts[0], gas: 3000000 });
-                console.log(`Note ${noteID} added to module ${moduleID}`);
+            // Adding the first block as a new note
+            const firstBlock = blocks[0];
+            if (!firstBlock || firstBlock.isReview) {
+                console.error(
+                    `No valid initial block found for noteID: ${noteID}, moduleID: ${moduleID}`
+                );
+                continue;
             }
 
-            // Adding all subsequent blocks.
+            const addNoteResponse = await axios.post(`${BACKEND_URL}/addNote`, {
+                moduleId: moduleID,
+                noteId: noteID,
+                data: firstBlock.data,
+                sender: "0x697d5ccb69DA579E84b5b1734F701D71a7A0d5e6",
+            });
+            console.log(
+                `Note added successfully: ${noteID}, transactionHash: ${addNoteResponse.data.transactionHash}`
+            );
+
+            // Adding all subsequent blocks
             for (let i = 1; i < blocks.length; i++) {
                 const block = blocks[i];
-                await contract.methods
-                    .addBlock(moduleID, parseInt(noteID), block.data, block.isReview)
-                    .send({ from: accounts[0], gas: 3000000 });
-                console.log(`Block added to note ${noteID} in module ${moduleID}`);
+
+                const addBlockResponse = await axios.post(`${BACKEND_URL}/addBlock`, {
+                    moduleId: moduleID,
+                    noteId: noteID,
+                    data: block.data,
+                    isReview: block.isReview,
+                    sender: "0x697d5ccb69DA579E84b5b1734F701D71a7A0d5e6",
+                });
+
+                console.log(
+                    `Block added to noteID: ${noteID}, transactionHash: ${addBlockResponse.data.transactionHash}`
+                );
             }
         } catch (error) {
-            console.error(`Failed to process note ${noteID} in module ${moduleID}:`, error.message);
+            console.error(`Failed to process noteID: ${noteID}, moduleID: ${moduleID}`);
+            console.error(error.response?.data || error.message);
         }
     }
+    console.log("Finished processing blocks.");
 }
 
 loadBlocks();

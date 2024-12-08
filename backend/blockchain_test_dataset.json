@@ -1,7 +1,7 @@
 [
     {
         "moduleID": "CS4337",
-        "noteID": 61,
+        "noteID": 1,
         "blocks": [
             {
                 "data": "Introduction to Kafka.",
@@ -19,7 +19,7 @@
     },
     {
         "moduleID": "CS4337",
-        "noteID": 62,
+        "noteID": 2,
         "blocks": [
             {
                 "data": "Consensus / Leader Election.",
@@ -38,7 +38,7 @@
 
         {
         "moduleID": "CS4207",
-        "noteID": 63,
+        "noteID": 3,
         "blocks": [
             {
                 "data": "Introduction to Blockchain.",
@@ -56,7 +56,7 @@
     },
     {
         "moduleID": "CS4207",
-        "noteID": 64,
+        "noteID": 4,
         "blocks": [
             {
                 "data": "Race Conditions",
@@ -71,7 +71,7 @@
 
     {
         "moduleID": "CS4287",
-        "noteID": 65,
+        "noteID": 5,
         "blocks": [
             {
                 "data": "Neural Computing",
@@ -86,7 +86,7 @@
 
         {
         "moduleID": "CS4125",
-        "noteID": 66,
+        "noteID": 6,
         "blocks": [
             {
                 "data": "Polymorphism",
@@ -105,7 +105,7 @@
 
     {
         "moduleID": "CS4125",
-        "noteID": 66,
+        "noteID": 7,
         "blocks": [
             {
                 "data": "Abstraction",
