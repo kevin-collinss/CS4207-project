@@ -39,17 +39,21 @@ contract AcademicResources {
     }
 
     // Proof of Work validation
-    function validateProofOfWork(string memory data, uint256 nonce) public view returns (bool) {
+    function validateProofOfWork(string memory moduleId, uint256 noteId, string memory data, uint256 nonce) public view returns (bool) {
         // Data & nonce hashed
-        bytes32 hash = keccak256(abi.encodePacked(data, nonce));
+        bytes32 hash = keccak256(abi.encodePacked(moduleId, noteId, data, nonce));
         // Check against difficulty
-        return uint256(hash) < miningDifficulty;
+
+        uint256 baseTarget = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+        uint256 target = baseTarget / miningDifficulty;
+        return uint256(hash) < target;
+        // return true;
     }
 
     // Add a new note (first block in a note's blockchain)
     function addNote(string memory moduleId, uint256 noteId, string memory data, uint256 nonce) public validModule(moduleId) {
         require(moduleNotes[moduleId][noteId].length == 0, "Note already exists");
-        require(validateProofOfWork(data, nonce), "Invalid proof of work");
+        require(validateProofOfWork(moduleId, noteId, data, nonce), "Invalid proof of work");
         Block memory newBlock = Block({
             data: data,
             submitter: msg.sender,
@@ -63,7 +67,7 @@ contract AcademicResources {
     // Add a new version or review to an existing note
     function addBlock(string memory moduleId, uint256 noteId, string memory data, bool isReview, uint256 nonce) public validModule(moduleId) {
         require(moduleNotes[moduleId][noteId].length > 0, "Note does not exist");
-        require(validateProofOfWork(data, nonce), "Invalid proof of work");
+        require(validateProofOfWork(moduleId, noteId, data, nonce), "Invalid proof of work");
         Block memory newBlock = Block({
             data: data,
             submitter: msg.sender,
