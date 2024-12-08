@@ -12,7 +12,7 @@ app.use(require("cors")());
 // Web3 Setup
 const web3 = new Web3("http://127.0.0.1:7545");
 const contractABI = JSON.parse(process.env.ABI);
-const contractAddress = process.env.CONTRACT_ADDRESS; // Replace with deployed contract address
+const contractAddress = process.env.CONTRACT_ADDRESS;
 const privateKey = process.env.PRIVATE_KEY;
 web3.eth.accounts.wallet.add(privateKey);
 
@@ -42,8 +42,7 @@ app.post("/addNote", async (req, res) => {
   try {
 
     //get difficulty from the contract
-    // const difficulty = await academicResources.methods.getMiningDifficulty().call();
-    const difficulty = 1000;
+    const difficulty = await academicResources.methods.getMiningDifficulty().call();
 
     const header = moduleId + noteId + data;
 
@@ -129,7 +128,7 @@ app.get("/getNoteBlocks", async (req, res) => {
     // Use the named keys to access the values
     const data = result.data;
     const submitters = result.submitters;
-    const timestamps = result.timestamps.map((timestamp) => Number(timestamp)); // Convert BigInt to Number if necessary
+    const timestamps = result.timestamps.map((timestamp) => Number(timestamp));
     const isReviews = result.isReviews;
 
     // Handle empty results
@@ -157,17 +156,23 @@ function mineNonce(header, difficulty) {
 
 
   const baseTarget = BigInt('0x' + 'f'.repeat(64)); 
-  const target = baseTarget / BigInt(difficulty);  // Adjust target based on difficulty
+  const target = baseTarget / BigInt(difficulty);
 
   console.log("Base target:", baseTarget.toString());
   console.log("Target:", target.toString());
 
   while (true) {
     
-    const hash = web3.utils.soliditySha3(header + nonce.toString());
+    const hash = web3.utils.soliditySha3(
+      {type: "string", value: moduleId}, 
+      {type: "uint256", value: noteId}, 
+      {type: "string", value: data}, 
+      {type: "uint256", value: nonce}, 
+    );
+    if (!hash) throw new Error("Failed to generate hash.");
+
     const hashAsBigInt = BigInt(`0x${hash.slice(2)}`); 
 
-    // console.log("Nonce:", nonce, "Hash:", hashAsBigInt.toString());
     if (hashAsBigInt < target) {
       console.log(`Valid nonce found: ${nonce}`);
       return nonce.toString(); 

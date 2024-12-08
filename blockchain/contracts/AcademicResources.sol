@@ -43,7 +43,10 @@ contract AcademicResources {
         // Data & nonce hashed
         bytes32 hash = keccak256(abi.encodePacked(data, nonce));
         // Check against difficulty
-        return uint256(hash) < miningDifficulty;
+
+        uint256 baseTarget = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+        uint256 target = baseTarget / miningDifficulty;
+        return uint256(hash) < target;
     }
 
     // Add a new note (first block in a note's blockchain)

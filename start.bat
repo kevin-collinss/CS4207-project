@@ -22,7 +22,7 @@ IF NOT EXIST "build\contracts\AcademicResources.json" (
 :: Setup .env file
 cd /d "../"
 timeout /t 5 /nobreak > nul
-python setupEnv.py
+python setup_env.py
 
 :: Start the backend server
 cd /d "backend"
