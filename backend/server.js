@@ -76,6 +76,8 @@ app.post('/createAccount', async (req, res) => {
     // Generate a new account
     const account = web3.eth.accounts.create();
 
+    web3.eth.accounts.wallet.add(account.privateKey);
+
     const gasPrice = await web3.eth.getGasPrice();
     const tx = {
       from: new Web3().eth.accounts.privateKeyToAccount(privateKey).address,
@@ -86,7 +88,7 @@ app.post('/createAccount', async (req, res) => {
     };
 
     const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
 
       // Send back the account address and private key
       res.status(200).json({
@@ -94,6 +96,10 @@ app.post('/createAccount', async (req, res) => {
           privateKey: account.privateKey,
           balance: checkBalance(account.address)
       });
+
+      const accounts = await web3.eth.getAccounts();
+      console.log("Available accounts:", accounts);
+
   } catch (error) {
       console.error("Error creating account:", error);
       res.status(500).json({
@@ -144,6 +150,8 @@ app.post("/addNote", async (req, res) => {
 
 // Add a new version or review to an existing note
 app.post("/addBlock", async (req, res) => {
+  const accounts = await web3.eth.getAccounts();
+  console.log("Available accounts:", accounts);
   const { moduleId, noteId, data, isReview, sender } = req.body;
 
   if (!moduleId || !noteId || !data || isReview === undefined || !sender) {
